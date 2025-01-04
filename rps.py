@@ -70,6 +70,8 @@ class RPS:
         Logic for playing a single round of the game.
         """
         self.display_overlay(frame, f"Round {self.round_number + 1}", position=(10, 80))
+        
+        # Countdown before the round starts
         if self.countdown_start is None:
             self.countdown_start = time.time()
 
@@ -81,27 +83,37 @@ class RPS:
         computer_move = self.computer.make_decision()
 
         if player_move != "None":
+            # Determine the winner and display the results
             winner = self.determine_winner(player_move, computer_move)
             self.display_overlay(frame, f"Player: {player_move}", position=(10, 150))
             self.display_overlay(frame, f"Computer: {computer_move}", position=(10, 200))
             self.display_overlay(frame, f"Winner: {winner}", position=(10, 250))
 
+            # Update scores
             if winner == "Player":
                 self.scores["Player"] += 1
             elif winner == "Computer":
                 self.scores["Computer"] += 1
 
             self.computer.learn(player_move)
+
+            # Introduce a post-round delay
+            if self.post_round_delay_start is None:
+                self.post_round_delay_start = time.time()
+
+            if not self.post_round_delay(frame, duration=3):
+                return "game"  # Wait for the delay to complete
+
+            # Reset and prepare for the next round
             self.round_number += 1
             self.countdown_start = None  # Reset countdown for the next round
+            self.post_round_delay_start = None  # Reset post-round delay timer
 
-            # Wait for a delay to show results
-            if not self.post_round_delay(frame, duration=3):
-                return "game"  # Wait until the delay is complete
             if self.round_number >= 5:
                 return "replay"
         else:
             self.display_overlay(frame, "No valid gesture detected!", position=(10, 150))
+
         return "game"
 
     def replay_menu(self, frame):
