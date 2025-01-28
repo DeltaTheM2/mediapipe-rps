@@ -59,7 +59,7 @@ class RPS:
         """
         Main menu logic to prompt the user to start or quit the game.
         """
-        self.display_overlay(frame, "Show Scissors to Start, Paper to Quit", position=(50, 50))
+        self.display_overlay(frame, "Show Scissors to Start, Paper to Quit", position=(25, 50))
         gesture = self.player.get_gesture(frame)
         if gesture == "Paper":
             return "quit"
@@ -127,8 +127,8 @@ class RPS:
         Replay menu logic to prompt the user to replay or quit the game.
         """
 
-        self.display_overlay(frame, "Game Over!", position=(200, 100), font_scale=2)
-        self.display_overlay(frame, "Show Scissors to Replay, Paper to Quit", position=(50, 150))
+        self.display_overlay(frame, "Game Over!", position=(125, 100), font_scale=2)
+        self.display_overlay(frame, "Show Scissors to Replay, Paper to Quit", position=(25, 150),font_scale=0.8)
         gesture = self.player.get_gesture(frame)
         if gesture == "Paper":
             return "quit"
@@ -164,7 +164,7 @@ class RPS:
                 cv2.imshow("Rock Paper Scissors", frame)
                 cv2.waitKey(2000)  # Allow user to see the message
                 break
-            print(self.state)
+            #print(self.state)
             # Display the updated frame
             cv2.imshow("Rock Paper Scissors", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
