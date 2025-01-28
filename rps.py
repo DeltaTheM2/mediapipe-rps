@@ -14,6 +14,7 @@ class RPS:
         self.post_round_delay_start = None  # Tracks time for post-round delay
         self.computer_move = None
         self.calculated = False
+        self.show_moves_start = None  # Tracks time for showing moves
 
     def determine_winner(self, player_move, computer_move):
         if player_move == computer_move:
@@ -38,13 +39,13 @@ class RPS:
         elapsed_time = time.time() - self.countdown_start
         remaining_time = duration - int(elapsed_time)
         if remaining_time > 0:
-            self.display_overlay(frame, f"Starting in {remaining_time}", position=(200, 250), font_scale=2)
+            self.display_overlay(frame, f"Starting in {remaining_time}", position=(200, 300), font_scale=2)
             return False  # Countdown not complete
         return True  # Countdown complete
 
-    def post_round_delay(self, frame, duration=3):
+    def post_round_delay(self, frame, duration=1):
         """
-        Delay after a round to show the results before starting the next round.
+        Delay to show results for a set duration before the next round.
         """
         if self.post_round_delay_start is None:
             self.post_round_delay_start = time.time()
@@ -79,7 +80,6 @@ class RPS:
 
         # 2) SHOW COUNTDOWN WHILE NOT DONE
         if not self.countdown(frame, duration=3):
-            # If countdown not complete, just keep waiting in "game" state
             return "game"
 
         # 3) GET MOVES (only once after countdown)
@@ -87,38 +87,39 @@ class RPS:
         if self.computer_move is None:
             self.computer_move = self.computer.make_decision()
 
-        # 4) IF WE HAVEN'T SCORED THIS ROUND YET, DO SO
+        # 4) SHOW MOVES AND DETERMINE WINNER
         if player_move != "None" and self.computer_move is not None and not self.calculated:
-            # determine winner and increment score
             winner = self.determine_winner(player_move, self.computer_move)
-            if winner == "Player":
-                self.scores["Player"] += 1
-            elif winner == "Computer":
-                self.scores["Computer"] += 1
-            # Show result overlays...
-            self.calculated = True  # Make sure we don't double-score
-            self.computer.learn(player_move)
+            self.display_overlay(frame, f"Player: {player_move}", position=(50, 325), font_scale=1.5, color=(255, 0, 0))
+            self.display_overlay(frame, f"Computer: {self.computer_move}", position=(50, 400), font_scale=1.5, color=(0, 0, 255))
 
-        # 5) IF WE HAVE SCORED ALREADY (self.calculated = True), SHOW RESULTS, THEN WAIT 3 SECONDS
+            if self.show_moves_start is None:
+                self.show_moves_start = time.time()
+
+            # Wait for 1 second to show moves
+            if time.time() - self.show_moves_start >= 1:
+                if winner == "Player":
+                    self.scores["Player"] += 1
+                elif winner == "Computer":
+                    self.scores["Computer"] += 1
+                self.calculated = True
+                self.computer.learn(player_move)
+
+        # 5) POST ROUND DELAY AND RESET
         if self.calculated:
-            # Keep showing the result overlay, but don’t score again
-            # Wait for the post-round delay to finish
-            if not self.post_round_delay(frame, duration=3):
-                return "game"  # STILL waiting...
+            if not self.post_round_delay(frame, duration=1):
+                return "game"
 
-            # Once delay is done, reset everything to move to next round
+            # Reset for the next round
             self.calculated = False
             self.round_number += 1
             self.countdown_start = None
             self.computer_move = None
-            
-            # If we’ve done enough rounds, go to "replay" (or whatever your end state is)
+            self.show_moves_start = None
+
+            # End the game after 5 rounds
             if self.round_number >= 5:
                 return "replay"
-
-        else:
-            # If we haven't detected a valid gesture yet, display a message
-            self.display_overlay(frame, "No valid gesture detected!", (10, 360))
 
         return "game"
 
@@ -126,9 +127,8 @@ class RPS:
         """
         Replay menu logic to prompt the user to replay or quit the game.
         """
-
         self.display_overlay(frame, "Game Over!", position=(125, 100), font_scale=2)
-        self.display_overlay(frame, "Show Scissors to Replay, Paper to Quit", position=(25, 150),font_scale=0.8)
+        self.display_overlay(frame, "Show Scissors to Replay, Paper to Quit", position=(25, 150), font_scale=0.8)
         gesture = self.player.get_gesture(frame)
         if gesture == "Paper":
             return "quit"
@@ -164,8 +164,7 @@ class RPS:
                 cv2.imshow("Rock Paper Scissors", frame)
                 cv2.waitKey(2000)  # Allow user to see the message
                 break
-            #print(self.state)
-            # Display the updated frame
+
             cv2.imshow("Rock Paper Scissors", frame)
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
@@ -176,6 +175,3 @@ class RPS:
 if __name__ == "__main__":
     game = RPS()
     game.play_game()
-
-
-
