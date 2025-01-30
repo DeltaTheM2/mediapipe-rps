@@ -58,14 +58,9 @@ class RPS:
 
     def main_menu(self, frame):
         """
-        Main menu logic to prompt the user to start or quit the game.
+        Main menu logic: Wait for 'S' to start or 'Q' to quit.
         """
-        self.display_overlay(frame, "Show Scissors to Start, Paper to Quit", position=(25, 50))
-        gesture = self.player.get_gesture(frame)
-        if gesture == "Paper":
-            return "quit"
-        elif gesture == "Scissors":
-            return "game"
+        self.display_overlay(frame, "Press 'S' to Start or 'Q' to Quit", position=(150, 50))
         return "menu"
 
     def play_round(self, frame):
@@ -125,15 +120,10 @@ class RPS:
 
     def replay_menu(self, frame):
         """
-        Replay menu logic to prompt the user to replay or quit the game.
+        Replay menu logic: Wait for 'S' to replay or 'Q' to quit.
         """
-        self.display_overlay(frame, "Game Over!", position=(125, 100), font_scale=2)
-        self.display_overlay(frame, "Show Scissors to Replay, Paper to Quit", position=(25, 150), font_scale=0.8)
-        gesture = self.player.get_gesture(frame)
-        if gesture == "Paper":
-            return "quit"
-        elif gesture == "Scissors":
-            return "game"
+        self.display_overlay(frame, "Game Over!", position=(200, 100), font_scale=2)
+        self.display_overlay(frame, "Press 'S' to Replay or 'Q' to Quit", position=(150, 150), font_scale=0.8)
         return "replay"
 
     def play_game(self):
@@ -151,7 +141,7 @@ class RPS:
                 print("Error: Unable to read from webcam.")
                 break
 
-            frame = cv2.resize(frame, (640, 480))
+            frame = cv2.resize(frame, (1280, 720))
 
             if self.state == "menu":
                 self.state = self.main_menu(frame)
@@ -166,8 +156,16 @@ class RPS:
                 break
 
             cv2.imshow("Rock Paper Scissors", frame)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
+
+            # Keyboard controls: 'S' to start/restart, 'Q' to quit
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):  # Quit the game
+                self.state = "quit"
+            elif key == ord('s'):  # Start or Restart
+                if self.state in ["menu", "replay"]:
+                    self.scores = {"Player": 0, "Computer": 0}
+                    self.round_number = 0
+                    self.state = "game"
 
         cap.release()
         cv2.destroyAllWindows()
